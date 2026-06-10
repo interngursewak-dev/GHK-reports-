@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GHK Reports</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ghk-blue:   #1a56db;
+      --ghk-blue-light: #e8f0fe;
+      --lab-purple: #7c3aed;
+      --lab-purple-light: #ede9fe;
+      --text:       #111827;
+      --text-muted: #6b7280;
+      --border:     #e5e7eb;
+      --bg:         #f9fafb;
+      --white:      #ffffff;
+      --radius:     12px;
+      --shadow:     0 1px 3px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.06);
+      --shadow-lg:  0 4px 16px rgba(0,0,0,.10), 0 8px 32px rgba(0,0,0,.08);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-icon {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, var(--ghk-blue), var(--lab-purple));
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 14px; font-weight: 700;
+    }
+
+    /* ── Breadcrumb ── */
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-muted);
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .breadcrumb span { cursor: pointer; }
+    .breadcrumb span:hover { color: var(--text); }
+    .breadcrumb .sep { color: var(--border); }
+    .breadcrumb .active { color: var(--text); font-weight: 500; }
+
+    /* ── Main layout ── */
+    main { max-width: 900px; margin: 0 auto; padding: 28px 20px 60px; }
+
+    /* ── Section headings ── */
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    /* ── Home: School cards ── */
+    .school-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-top: 32px;
+    }
+    @media (max-width: 560px) { .school-grid { grid-template-columns: 1fr; } }
+
+    .school-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 2px solid var(--border);
+      padding: 28px 24px;
+      cursor: pointer;
+      transition: border-color .18s, box-shadow .18s, transform .12s;
+      position: relative;
+      overflow: hidden;
+    }
+    .school-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+    }
+    .school-card.blue::before  { background: var(--ghk-blue); }
+    .school-card.purple::before { background: var(--lab-purple); }
+    .school-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+    .school-card.blue:hover  { border-color: var(--ghk-blue); }
+    .school-card.purple:hover { border-color: var(--lab-purple); }
+
+    .school-card .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+    .school-card.blue .tag   { background: var(--ghk-blue-light); color: var(--ghk-blue); }
+    .school-card.purple .tag { background: var(--lab-purple-light); color: var(--lab-purple); }
+
+    .school-card h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .school-card p  { font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+    .school-card .count {
+      margin-top: 18px;
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    /* ── Report type grid ── */
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: var(--text-muted);
+      cursor: pointer;
+      margin-bottom: 22px;
+      padding: 6px 0;
+    }
+    .back-btn:hover { color: var(--text); }
+
+    .school-banner {
+      padding: 18px 22px;
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .school-banner.blue   { background: var(--ghk-blue-light); }
+    .school-banner.purple { background: var(--lab-purple-light); }
+    .school-banner h1 { font-size: 20px; font-weight: 700; }
+    .school-banner.blue h1   { color: var(--ghk-blue); }
+    .school-banner.purple h1 { color: var(--lab-purple); }
+    .school-banner p { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+    .report-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+    }
+    .report-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 18px;
+      cursor: pointer;
+      transition: border-color .15s, box-shadow .15s, transform .12s;
+    }
+    .report-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+    .report-card.blue:hover   { border-color: var(--ghk-blue); }
+    .report-card.purple:hover { border-color: var(--lab-purple); }
+
+    .report-card .icon {
+      font-size: 26px;
+      margin-bottom: 10px;
+    }
+    .report-card h3 { font-size: 15px; font-weight: 600; }
+    .report-card .freq-count { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
+
+    /* ── Frequency tabs ── */
+    .freq-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .freq-tab {
+      padding: 7px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--white);
+      color: var(--text-muted);
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    .freq-tab:hover { border-color: #9ca3af; color: var(--text); }
+    .freq-tab.active.blue   { background: var(--ghk-blue); color: white; border-color: var(--ghk-blue); }
+    .freq-tab.active.purple { background: var(--lab-purple); color: white; border-color: var(--lab-purple); }
+
+    /* ── File list ── */
+    .files-section { margin-top: 4px; }
+    .files-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .file-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .file-card:hover { box-shadow: var(--shadow); }
+    .file-card.blue:hover   { border-color: var(--ghk-blue); }
+    .file-card.purple:hover { border-color: var(--lab-purple); }
+
+    .file-icon {
+      width: 38px; height: 38px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .file-icon.blue   { background: var(--ghk-blue-light); }
+    .file-icon.purple { background: var(--lab-purple-light); }
+
+    .file-meta { flex: 1; min-width: 0; }
+    .file-meta h4 {
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-meta .date { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .file-arrow { color: var(--text-muted); font-size: 16px; flex-shrink: 0; }
+
+    /* ── Loading / empty states ── */
+    .state-box {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--text-muted);
+    }
+    .state-box .icon { font-size: 36px; margin-bottom: 12px; }
+    .state-box p { font-size: 14px; line-height: 1.6; }
+    .state-box a { color: var(--ghk-blue); text-decoration: none; }
+
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid var(--border);
+      border-top-color: var(--ghk-blue);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── PDF Viewer ── */
+    #viewer-view { display: none; flex-direction: column; height: calc(100vh - 56px); }
+    #viewer-view.active { display: flex; }
+
+    .viewer-topbar {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+    .viewer-topbar .back { cursor: pointer; font-size: 20px; color: var(--text-muted); }
+    .viewer-topbar .back:hover { color: var(--text); }
+    .viewer-topbar .title { font-size: 15px; font-weight: 600; flex: 1; }
+    .viewer-topbar .open-btn {
+      font-size: 13px;
+      color: var(--ghk-blue);
+      text-decoration: none;
+      padding: 6px 12px;
+      border: 1px solid var(--ghk-blue);
+      border-radius: 6px;
+    }
+    .viewer-topbar .open-btn:hover { background: var(--ghk-blue-light); }
+
+    #report-frame {
+      flex: 1;
+      border: none;
+      background: #f0f0f0;
+    }
+
+    /* ── Config notice ── */
+    .config-notice {
+      background: #fffbeb;
+      border: 1px solid #fcd34d;
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 13px;
+      color: #92400e;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .config-notice.show { display: block; }
+
+    /* ── Page views ── */
+    .view { display: none; }
+    .view.active { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     HEADER
+════════════════════════════════════════════════ -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">G</div>
+    GHK Reports
+  </div>
+  <div class="breadcrumb" id="breadcrumb"></div>
+</header>
+
+<!-- ═══════════════════════════════════════════════
+     PDF VIEWER (full-height, outside main)
+════════════════════════════════════════════════ -->
+<div id="viewer-view">
+  <div class="viewer-topbar">
+    <span class="back" onclick="closeViewer()">&#8592;</span>
+    <span class="title" id="viewer-title">Report</span>
+    <a class="open-btn" id="viewer-open" href="#" target="_blank">Open in Drive ↗</a>
+  </div>
+  <iframe id="report-frame" src="about:blank" allowfullscreen></iframe>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MAIN CONTENT
+════════════════════════════════════════════════ -->
+<main id="main-content">
+
+  <!-- Config notice (shown if APPS_SCRIPT_URL not set) -->
+  <div class="config-notice" id="config-notice">
+    ⚠️ <strong>Setup needed:</strong> Replace <code>APPS_SCRIPT_URL</code> in this file with your deployed Apps Script Web App URL to load files from Google Drive.
+  </div>
+
+  <!-- ── View 1: Home (school selector) ── -->
+  <div class="view active" id="home-view">
+    <p class="section-title">Select School</p>
+    <div class="school-grid">
+
+      <div class="school-card blue" onclick="selectSchool('GHK School')">
+        <div class="tag">SCHOOL</div>
+        <h2>GHK School</h2>
+        <p>Students &amp; staff reports, lesson plans, behaviour tracking</p>
+        <div class="count">📂 5 report types &nbsp;·&nbsp; 32 folders</div>
+      </div>
+
+      <div class="school-card purple" onclick="selectSchool('GHK Lab School')">
+        <div class="tag">LAB SCHOOL</div>
+        <h2>GHK Lab School</h2>
+        <p>Students &amp; team attendance, inventory &amp; supervisor reports</p>
+        <div class="count">📂 4 report types &nbsp;·&nbsp; 21 folders</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── View 2: Report types ── -->
+  <div class="view" id="reports-view">
+    <div class="back-btn" onclick="goHome()">&#8592; All Schools</div>
+    <div class="school-banner" id="school-banner">
+      <div>
+        <h1 id="school-banner-title">School</h1>
+        <p id="school-banner-sub">Select a report type to continue</p>
+      </div>
+    </div>
+    <p class="section-title">Report Types</p>
+    <div class="report-grid" id="report-grid"></div>
+  </div>
+
+  <!-- ── View 3: Files (frequency tabs + file list) ── -->
+  <div class="view" id="files-view">
+    <div class="back-btn" onclick="goReports()">&#8592; <span id="back-school-name">School</span></div>
+    <p style="font-size:20px;font-weight:700;margin-bottom:16px" id="report-type-heading"></p>
+
+    <div class="freq-tabs" id="freq-tabs"></div>
+
+    <div class="files-section">
+      <div id="file-list-container">
+        <div class="state-box">
+          <div class="icon">📂</div>
+          <p>Select a frequency tab above to load reports.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  CONFIGURATION — paste your Apps Script Web App URL here
+// ═══════════════════════════════════════════════════════════════
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyGs1TZZpI7FglZ9Y8owJEA5zDWSB-VslwxEz7kJVDAkaO1qo9AJFrXcmE8ckSniHg/exec';
+
+// ═══════════════════════════════════════════════════════════════
+//  FOLDER DATA  (school → report type → frequency → folder ID)
+// ═══════════════════════════════════════════════════════════════
+const FOLDERS = {
+  'GHK Lab School': {
+    'Students Attendance': {
+      icon: '🎒',
+      folders: {
+        'Daily':     '1IF84PQeMl5p7Dp8jH4x06ZslC5Nmdfhk',
+        'Weekly':    '1ZeI796zOfEhwM09fNn3IEGn_MsihjIz2',
+        'Monthly':   '1rOglixTNGNfthB7B04eIsQLx_CXdispb',
+        'Quarterly': '1GvwdrLGABlNN-_LmdIYvO-zhvRH4bhjd',
+        'Yearly':    '1f4dLVt7LH9Xlw5o_o4JaNqoNliQ3vyJu'
+      }
+    },
+    'Team Attendance': {
+      icon: '👥',
+      folders: {
+        'Daily (Evening)': '1ZlbtIDZPHlOvhKAZtsHxxN3DvJRgMIuH',
+        'Daily (Morning)': '1htbu-8Ei2b18Se6H153kYQuDVr9AHpH0',
+        'Weekly':          '1q-Ikc0Uji1mC5ra2qfUZhkHslcOkxJnx',
+        'Monthly':         '1MDPmxqkysoEIS7E9gdeY9lii4pOol11C',
+        'Quarterly':       '1b0OYvmNxECMblwgxKqH8s48ofJsANgPn',
+        'Yearly':          '1IxDzA716fuSx1kqBSLp6e4dtVs5xQ4I4'
+      }
+    },
+    'Inventory Report': {
+      icon: '📦',
+      folders: {
+        'Daily':     '1euyF5BdxEk12EN5GVXxqDVz6cTl_YFkc',
+        'Weekly':    '1ZXcRvsMluYZTNRBUz5BRji7TQU_61jkF',
+        'Monthly':   '1z-xCafxEK-6_qnnMpuP1vDoZEYwnOhvo',
+        'Quarterly': '1-QhPGFj6v5OkDgcu0a0qEV3eFksQPJQ3',
+        'Yearly':    '1HiXXxEt4hu_FbfPPoi-imuMWXG2kMA6I'
+      }
+    },
+    'Supervisor Report': {
+      icon: '📋',
+      folders: {
+        'Daily':     '1awWGh9lUyEg-cdYynoWRVN2ebihoj10r',
+        'Weekly':    '18bG51EnkGfMFbmSth9XiGsiS5XPts8Cy',
+        'Monthly':   '1ytnwW3icoi4gBx_bfpTmOUd5J6qU9NGh',
+        'Quarterly': '1zJFKYrKwbAJrbYO49kv3GeR7zyxEFb3V',
+        'Yearly':    '1psbPLucmjIUNsTV-j6yI4353dgR5d7rb'
+      }
+    }
+  },
+
+  'GHK School': {
+    'Students Attendance': {
+      icon: '🎒',
+      folders: {
+        'Daily':     '1GDcjP3kpWsEwSBs8ctsiXInpfrUrdZmb',
+        'Weekly':    '1V57BNmXQHGSdtsiwxuU48P3f6KFKGwit',
+        'Monthly':   '1_ZgnhQ9f_Q6rW3xx-LMtvwc6sycbQsmu',
+        'Quarterly': '1BJtYX2QD_2aNYXxRyzYaIDY_wPdJ-loe',
+        'Yearly':    '1kTwP3gaUkZGJ-yLBDKXDB0l_g4TnvKwC'
+      }
+    },
+    'Team Attendance': {
+      icon: '👥',
+      folders: {
+        'Daily (Morning)': '1MibE5Y-UFWyOR-tB7JFz2Kpqv8YaCJW4',
+        'Daily (Evening)': '17LFByVgjyUx8ViNudTmBtgRLfFLzh5yp',
+        'Weekly':          '1_lhbmlNhQubkcV0B2nSqmSxpAVV0hyRl',
+        'Monthly':         '1sAvNeWZZqaZtzeTa7KYaEeoTEvw55ay2',
+        'Quarterly':       '1l9ZJiSiB-Ay5rrrW3L0dp2Wv5kOcbp8k',
+        'Yearly':          '1dtwJZaXdROOb0-Kwk64OFaRiWCrx3Rdo'
+      }
+    },
+    'Behaviour Report': {
+      icon: '📊',
+      folders: {
+        'Daily':     '1aCw-v3JuYtXjhqxt1IDMLxhCBXW9wyZs',
+        'Weekly':    '1Exbh-AYLSm9oEolPTOsfsPXSAMDIiVrd',
+        'Monthly':   '1DtzEzJN2wQZgMzXwB-SS7K_lti0ijC9K',
+        'Quarterly': '1VKpgYOY-ScyCeTowCOkqUDjTBC4k1yNg',
+        'Yearly':    '15SGyoe-g2ONQVRE2WN_ErNpvGyBMaUQW'
+      }
+    },
+    'Supervisor Report': {
+      icon: '📋',
+      folders: {
+        'Daily':     '16E_3EAOHBd9K-1njP6wfrNMDXCoSFQEK',
+        'Weekly':    '1NUGGc7UBbfmF_Ia34GNq4hlCiCJ5oH0e',
+        'Monthly':   '1QuX8Sjy4rw1K83R5HoojZn0PjGXqhz_d',
+        'Quarterly': '1U-Y_AvyQWbb8GzfwWRRBNMIhzpxEhHIx',
+        'Yearly':    '1IL-bsdV9lKa34rKB78P_zVeWvoHhpVw-'
+      }
+    },
+    'Lesson Plan Tracker': {
+      icon: '📝',
+      folders: {
+        'Daily':     '12R8W77tdPvSSXgz6ctvu6lzzUm3q_Ifz',
+        'Weekly':    '1kYpLmf_KLPhrPZYW6-zOC5GptxDfBnzW',
+        'Monthly':   '1BbkDMs4kZDtvLdkoOiNBqFkVf7JD3qp5',
+        'Quarterly': '1ki79V9hQsumRbuox5QHSiuWVSSsoQUc6',
+        'Yearly':    '1lAFNo7goQjLOEASOCYq04OwM5RGqT0a0'
+      }
+    }
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════
+let state = {
+  school: null,
+  reportType: null,
+  frequency: null
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════════
+function schoolClass(school) {
+  return school === 'GHK Lab School' ? 'purple' : 'blue';
+}
+
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('main-content').style.display = 'block';
+  document.getElementById('viewer-view').classList.remove('active');
+}
+
+function updateBreadcrumb() {
+  const bc = document.getElementById('breadcrumb');
+  const parts = [];
+
+  parts.push(`<span onclick="goHome()">Home</span>`);
+  if (state.school) {
+    parts.push(`<span class="sep">›</span>`);
+    if (state.reportType) {
+      parts.push(`<span onclick="goReports()">${state.school}</span>`);
+    } else {
+      parts.push(`<span class="active">${state.school}</span>`);
+    }
+  }
+  if (state.reportType) {
+    parts.push(`<span class="sep">›</span>`);
+    if (state.frequency) {
+      parts.push(`<span onclick="goFiles()">${state.reportType}</span>`);
+    } else {
+      parts.push(`<span class="active">${state.reportType}</span>`);
+    }
+  }
+  if (state.frequency) {
+    parts.push(`<span class="sep">›</span>`);
+    parts.push(`<span class="active">${state.frequency}</span>`);
+  }
+
+  bc.innerHTML = parts.join('');
+}
+
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function getFileIcon(mimeType) {
+  if (!mimeType) return '📄';
+  if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) return '📊';
+  if (mimeType.includes('document') || mimeType.includes('word')) return '📝';
+  if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return '📑';
+  if (mimeType.includes('pdf')) return '📕';
+  if (mimeType.includes('image')) return '🖼️';
+  if (mimeType.includes('html')) return '🌐';
+  return '📄';
+}
+
+function getPreviewUrl(fileId, mimeType) {
+  if (!mimeType) return `https://drive.google.com/file/d/${fileId}/preview`;
+  if (mimeType.includes('spreadsheet')) return `https://docs.google.com/spreadsheets/d/${fileId}/preview`;
+  if (mimeType.includes('document'))    return `https://docs.google.com/document/d/${fileId}/preview`;
+  if (mimeType.includes('presentation'))return `https://docs.google.com/presentation/d/${fileId}/preview`;
+  return `https://drive.google.com/file/d/${fileId}/preview`;
+}
+
+function getDriveUrl(fileId, mimeType) {
+  if (!mimeType) return `https://drive.google.com/file/d/${fileId}/view`;
+  if (mimeType.includes('spreadsheet')) return `https://docs.google.com/spreadsheets/d/${fileId}/edit`;
+  if (mimeType.includes('document'))    return `https://docs.google.com/document/d/${fileId}/edit`;
+  if (mimeType.includes('presentation'))return `https://docs.google.com/presentation/d/${fileId}/edit`;
+  return `https://drive.google.com/file/d/${fileId}/view`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function goHome() {
+  state = { school: null, reportType: null, frequency: null };
+  updateBreadcrumb();
+  showView('home-view');
+  window.scrollTo(0, 0);
+}
+
+function selectSchool(school) {
+  state.school = school;
+  state.reportType = null;
+  state.frequency = null;
+  updateBreadcrumb();
+  renderReportTypes();
+  showView('reports-view');
+  window.scrollTo(0, 0);
+}
+
+function goReports() {
+  state.reportType = null;
+  state.frequency = null;
+  updateBreadcrumb();
+  renderReportTypes();
+  showView('reports-view');
+  window.scrollTo(0, 0);
+}
+
+function selectReport(reportType) {
+  state.reportType = reportType;
+  state.frequency = null;
+  updateBreadcrumb();
+  renderFilesView();
+  showView('files-view');
+  window.scrollTo(0, 0);
+}
+
+function goFiles() {
+  state.frequency = null;
+  updateBreadcrumb();
+  renderFilesView();
+  showView('files-view');
+  window.scrollTo(0, 0);
+}
+
+function selectFrequency(freq) {
+  state.frequency = freq;
+  updateBreadcrumb();
+  renderFreqTabs();
+  loadFiles(freq);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  RENDER: Report types
+// ═══════════════════════════════════════════════════════════════
+function renderReportTypes() {
+  const cls = schoolClass(state.school);
+  const schoolData = FOLDERS[state.school];
+
+  const banner = document.getElementById('school-banner');
+  banner.className = 'school-banner ' + cls;
+  document.getElementById('school-banner-title').textContent = state.school;
+  document.getElementById('school-banner-sub').textContent =
+    Object.keys(schoolData).length + ' report types';
+
+  const grid = document.getElementById('report-grid');
+  grid.innerHTML = '';
+
+  for (const [type, data] of Object.entries(schoolData)) {
+    const freqCount = Object.keys(data.folders).length;
+    const card = document.createElement('div');
+    card.className = 'report-card ' + cls;
+    card.innerHTML = `
+      <div class="icon">${data.icon}</div>
+      <h3>${type}</h3>
+      <div class="freq-count">${freqCount} frequency folders</div>
+    `;
+    card.addEventListener('click', () => selectReport(type));
+    grid.appendChild(card);
+  }
+
+  document.getElementById('back-school-name').textContent = state.school;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  RENDER: Frequency tabs
+// ═══════════════════════════════════════════════════════════════
+function renderFilesView() {
+  const cls = schoolClass(state.school);
+  document.getElementById('report-type-heading').textContent = state.reportType;
+  document.getElementById('back-school-name').textContent = state.school;
+  renderFreqTabs();
+  document.getElementById('file-list-container').innerHTML = `
+    <div class="state-box">
+      <div class="icon">📂</div>
+      <p>Select a frequency tab above to load reports.</p>
+    </div>`;
+}
+
+function renderFreqTabs() {
+  const cls = schoolClass(state.school);
+  const folders = FOLDERS[state.school][state.reportType].folders;
+  const tabBar = document.getElementById('freq-tabs');
+  tabBar.innerHTML = '';
+
+  for (const freq of Object.keys(folders)) {
+    const tab = document.createElement('div');
+    tab.className = 'freq-tab' + (state.frequency === freq ? ' active ' + cls : '');
+    tab.textContent = freq;
+    tab.addEventListener('click', () => selectFrequency(freq));
+    tabBar.appendChild(tab);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LOAD FILES from Apps Script
+// ═══════════════════════════════════════════════════════════════
+async function loadFiles(freq) {
+  const cls = schoolClass(state.school);
+  const folderId = FOLDERS[state.school][state.reportType].folders[freq];
+  const container = document.getElementById('file-list-container');
+
+  // Check if Apps Script URL is configured
+  if (APPS_SCRIPT_URL === 'APPS_SCRIPT_URL') {
+    document.getElementById('config-notice').classList.add('show');
+    container.innerHTML = `
+      <div class="state-box">
+        <div class="icon">⚙️</div>
+        <p>Apps Script URL not configured yet.<br>
+        Add your deployed Web App URL at the top of <code>index.html</code>.<br><br>
+        <a href="https://github.com/your-repo" target="_blank">Setup guide →</a></p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="state-box">
+      <div class="spinner"></div>
+      <p>Loading reports...</p>
+    </div>`;
+
+  try {
+    const url = `${APPS_SCRIPT_URL}?folderId=${folderId}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.error) throw new Error(data.error);
+
+    if (!data.files || data.files.length === 0) {
+      container.innerHTML = `
+        <div class="state-box">
+          <div class="icon">📭</div>
+          <p>No reports found in this folder yet.</p>
+        </div>`;
+      return;
+    }
+
+    const list = document.createElement('div');
+    list.className = 'files-list';
+
+    for (const file of data.files) {
+      const card = document.createElement('div');
+      card.className = 'file-card ' + cls;
+      card.innerHTML = `
+        <div class="file-icon ${cls}">${getFileIcon(file.mimeType)}</div>
+        <div class="file-meta">
+          <h4>${file.name}</h4>
+          <div class="date">Modified: ${formatDate(file.modified)}</div>
+        </div>
+        <div class="file-arrow">›</div>
+      `;
+      card.addEventListener('click', () => openViewer(file));
+      list.appendChild(card);
+    }
+
+    container.innerHTML = `<p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">${data.files.length} report${data.files.length !== 1 ? 's' : ''}</p>`;
+    container.appendChild(list);
+
+  } catch (err) {
+    container.innerHTML = `
+      <div class="state-box">
+        <div class="icon">⚠️</div>
+        <p>Could not load files.<br><small>${err.message}</small></p>
+      </div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  VIEWER
+// ═══════════════════════════════════════════════════════════════
+function openViewer(file) {
+  document.getElementById('viewer-title').textContent = file.name;
+  document.getElementById('viewer-open').href = getDriveUrl(file.id, file.mimeType);
+  document.getElementById('report-frame').src = getPreviewUrl(file.id, file.mimeType);
+
+  document.getElementById('main-content').style.display = 'none';
+  document.getElementById('viewer-view').classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function closeViewer() {
+  document.getElementById('report-frame').src = 'about:blank';
+  document.getElementById('main-content').style.display = 'block';
+  document.getElementById('viewer-view').classList.remove('active');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════
+updateBreadcrumb();
+</script>
+
+</body>
+</html>
