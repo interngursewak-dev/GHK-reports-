@@ -844,7 +844,7 @@ async function doLogin() {
   try {
     const res  = await fetch(APPS_SCRIPT_URL, {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain' },  // text/plain avoids CORS preflight
       body:    JSON.stringify({ action: 'login', username, password })
     });
     const data = await res.json();
