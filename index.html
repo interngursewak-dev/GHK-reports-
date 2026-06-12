@@ -23,6 +23,8 @@
       --warning-bg:       #fffbeb;
       --warning-border:   #fcd34d;
       --warning-text:     #92400e;
+      --success:          #15803d;
+      --success-light:    #f0fdf4;
       --radius:           12px;
       --shadow:           0 1px 3px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.06);
       --shadow-lg:        0 4px 16px rgba(0,0,0,.10), 0 8px 32px rgba(0,0,0,.08);
@@ -228,6 +230,17 @@
       display: flex; align-items: center; gap: 6px;
     }
 
+    /* ── Dashboard button on home cards ── */
+    .school-card .dash-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      margin-top: 14px; padding: 6px 12px;
+      font-size: 12px; font-weight: 600; border-radius: 7px;
+      border: none; cursor: pointer; transition: opacity .15s;
+    }
+    .school-card.blue .dash-btn   { background: var(--ghk-blue-light); color: var(--ghk-blue); }
+    .school-card.purple .dash-btn { background: var(--lab-purple-light); color: var(--lab-purple); }
+    .school-card .dash-btn:hover  { opacity: .8; }
+
     .back-btn {
       display: inline-flex; align-items: center; gap: 6px;
       font-size: 14px; color: var(--text-muted);
@@ -299,6 +312,15 @@
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .file-meta .date { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    /* ── HTML badge on file cards ── */
+    .file-type-badge {
+      font-size: 10px; font-weight: 700; padding: 2px 6px;
+      border-radius: 4px; margin-left: 6px; vertical-align: middle;
+    }
+    .file-type-badge.html { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+    .file-type-badge.pdf  { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
     .file-arrow { color: var(--text-muted); font-size: 16px; flex-shrink: 0; }
 
     .state-box { text-align: center; padding: 48px 24px; color: var(--text-muted); }
@@ -336,10 +358,108 @@
       white-space: nowrap; flex-shrink: 0;
     }
     .viewer-topbar .open-btn:hover { background: var(--ghk-blue-light); }
+
+    /* ── viewer mode indicator ── */
+    .viewer-mode-badge {
+      font-size: 11px; font-weight: 600; padding: 3px 8px;
+      border-radius: 5px; flex-shrink: 0;
+    }
+    .viewer-mode-badge.html { background: #fff7ed; color: #c2410c; }
+    .viewer-mode-badge.pdf  { background: #fef2f2; color: #dc2626; }
+
     #report-frame { flex: 1; border: none; background: #f0f0f0; }
 
     .view { display: none; }
     .view.active { display: block; }
+
+    /* ══════════ DASHBOARD ══════════ */
+    #dashboard-view { display: none; }
+    #dashboard-view.active { display: block; }
+
+    .dash-header {
+      display: flex; align-items: center; gap: 14px;
+      padding: 18px 22px; border-radius: var(--radius);
+      margin-bottom: 24px;
+    }
+    .dash-header.blue   { background: var(--ghk-blue-light); }
+    .dash-header.purple { background: var(--lab-purple-light); }
+    .dash-header .dh-icon {
+      font-size: 28px; width: 52px; height: 52px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .dash-header.blue .dh-icon   { background: var(--ghk-blue); }
+    .dash-header.purple .dh-icon { background: var(--lab-purple); }
+    .dash-header h1 { font-size: 20px; font-weight: 700; }
+    .dash-header.blue h1   { color: var(--ghk-blue); }
+    .dash-header.purple h1 { color: var(--lab-purple); }
+    .dash-header p { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+    .dash-stats-row {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px; margin-bottom: 28px;
+    }
+    .dash-stat {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px 14px; text-align: center;
+    }
+    .dash-stat .ds-value { font-size: 26px; font-weight: 800; line-height: 1; }
+    .dash-stat .ds-label { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
+    .dash-stat.blue  .ds-value { color: var(--ghk-blue); }
+    .dash-stat.purple .ds-value { color: var(--lab-purple); }
+
+    .dash-sections { display: flex; flex-direction: column; gap: 24px; }
+    .dash-section { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .dash-section-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px; border-bottom: 1px solid var(--border);
+    }
+    .dash-section-head .dsh-left { display: flex; align-items: center; gap: 10px; }
+    .dash-section-head .dsh-icon { font-size: 18px; }
+    .dash-section-head h3 { font-size: 15px; font-weight: 600; }
+    .dash-section-head .dsh-browse {
+      font-size: 12px; cursor: pointer; padding: 5px 10px;
+      border-radius: 6px; border: 1px solid var(--border);
+      color: var(--text-muted); background: var(--bg);
+      transition: color .15s, border-color .15s;
+    }
+    .dash-section-head.blue .dsh-browse:hover   { color: var(--ghk-blue);   border-color: var(--ghk-blue); }
+    .dash-section-head.purple .dsh-browse:hover { color: var(--lab-purple); border-color: var(--lab-purple); }
+
+    .dash-freq-row {
+      display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .dash-freq-chip {
+      font-size: 12px; padding: 4px 10px; border-radius: 20px;
+      border: 1px solid var(--border); color: var(--text-muted); background: var(--bg);
+      cursor: pointer; transition: all .15s;
+    }
+    .dash-freq-chip.blue:hover   { background: var(--ghk-blue-light);   color: var(--ghk-blue);   border-color: var(--ghk-blue); }
+    .dash-freq-chip.purple:hover { background: var(--lab-purple-light); color: var(--lab-purple); border-color: var(--lab-purple); }
+
+    .dash-latest {
+      padding: 14px 18px;
+    }
+    .dash-latest-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px; }
+    .dash-latest-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 0; border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .dash-latest-item:last-child { border-bottom: none; }
+    .dash-latest-item .dli-icon { font-size: 16px; flex-shrink: 0; }
+    .dash-latest-item .dli-name {
+      flex: 1; font-size: 13px; font-weight: 500;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .dash-latest-item .dli-freq { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
+    .dash-latest-item .dli-date { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
+    .dash-loading { padding: 16px 18px; text-align: center; }
+    .dash-loading .mini-spinner {
+      width: 20px; height: 20px; border: 2px solid var(--border);
+      border-top-color: var(--ghk-blue); border-radius: 50%;
+      animation: spin .7s linear infinite; display: inline-block;
+    }
   </style>
 </head>
 <body>
@@ -403,11 +523,12 @@
     </div>
   </header>
 
-  <!-- PDF Viewer -->
+  <!-- PDF / HTML Viewer -->
   <div id="viewer-view">
     <div class="viewer-topbar">
       <span class="back" onclick="closeViewer()">&#8592;</span>
       <span class="title" id="viewer-title">Report</span>
+      <span class="viewer-mode-badge" id="viewer-mode-badge"></span>
       <a class="open-btn" id="viewer-open" href="#" target="_blank">Open in Drive ↗</a>
     </div>
     <iframe id="report-frame" src="about:blank" allowfullscreen></iframe>
@@ -424,12 +545,14 @@
           <h2>GHK School</h2>
           <p>Student &amp; team attendance, behaviour, supervisor &amp; lesson plan reports</p>
           <div class="count">📂 5 report types &nbsp;·&nbsp; 26 folders</div>
+          <button class="dash-btn" onclick="event.stopPropagation(); openDashboard('GHK School')">📊 Dashboard</button>
         </div>
         <div class="school-card purple" onclick="selectSchool('GHK Lab School')">
           <div class="tag">LAB SCHOOL</div>
           <h2>GHK Lab School</h2>
           <p>Student &amp; team attendance, inventory &amp; supervisor reports</p>
           <div class="count">📂 4 report types &nbsp;·&nbsp; 21 folders</div>
+          <button class="dash-btn" onclick="event.stopPropagation(); openDashboard('GHK Lab School')">📊 Dashboard</button>
         </div>
       </div>
     </div>
@@ -460,12 +583,26 @@
       </div>
     </div>
 
+    <!-- View 4: Dashboard -->
+    <div class="view" id="dashboard-view">
+      <div class="back-btn" onclick="goHome()">&#8592; All Schools</div>
+      <div class="dash-header" id="dash-header">
+        <div class="dh-icon" id="dash-icon">📊</div>
+        <div>
+          <h1 id="dash-school-title">Dashboard</h1>
+          <p id="dash-school-sub">Overview of all reports</p>
+        </div>
+      </div>
+      <div class="dash-stats-row" id="dash-stats-row"></div>
+      <div class="dash-sections" id="dash-sections"></div>
+    </div>
+
   </main>
 </div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-//  CONFIG  — paste your deployed Apps Script URL here
+//  CONFIG
 // ═══════════════════════════════════════════════════════════════
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbymgpKUSZtF_FPU4aLjMaB2Y1tGzTyU7c2127F7MjGrsn1hXVSd0g22v0x0zAvvFOo/exec';
 
@@ -573,7 +710,7 @@ const FOLDERS = {
 };
 
 // ═══════════════════════════════════════════════════════════════
-//  AUTH  (session stored in sessionStorage — clears on tab close)
+//  AUTH
 // ═══════════════════════════════════════════════════════════════
 const AUTH = {
   get token()    { return sessionStorage.getItem('ghk_token'); },
@@ -590,7 +727,7 @@ const AUTH = {
 };
 
 // ═══════════════════════════════════════════════════════════════
-//  LOGIN UI WIRING
+//  LOGIN UI
 // ═══════════════════════════════════════════════════════════════
 document.getElementById('toggle-pw').addEventListener('click', function () {
   const inp = document.getElementById('password');
@@ -655,7 +792,7 @@ function showLoginError(msg) {
 
 function doLogout() {
   AUTH.clear();
-  state = { school: null, reportType: null, frequency: null };
+  state = { school: null, reportType: null, frequency: null, view: 'home' };
   document.getElementById('app-shell').classList.remove('visible');
   document.getElementById('login-screen').classList.remove('hidden');
   document.getElementById('username').value = '';
@@ -675,7 +812,7 @@ function showApp() {
 // ═══════════════════════════════════════════════════════════════
 //  APP STATE
 // ═══════════════════════════════════════════════════════════════
-let state = { school: null, reportType: null, frequency: null };
+let state = { school: null, reportType: null, frequency: null, view: 'home' };
 
 // ═══════════════════════════════════════════════════════════════
 //  HELPERS
@@ -693,19 +830,25 @@ function updateBreadcrumb() {
   const bc = document.getElementById('breadcrumb');
   const parts = [];
   parts.push(`<span onclick="goHome()">Home</span>`);
-  if (state.school) {
+
+  if (state.view === 'dashboard' && state.school) {
     parts.push(`<span class="sep">›</span>`);
-    if (state.reportType) parts.push(`<span onclick="goReports()">${state.school}</span>`);
-    else                  parts.push(`<span class="active">${state.school}</span>`);
-  }
-  if (state.reportType) {
-    parts.push(`<span class="sep">›</span>`);
-    if (state.frequency) parts.push(`<span onclick="goFiles()">${state.reportType}</span>`);
-    else                 parts.push(`<span class="active">${state.reportType}</span>`);
-  }
-  if (state.frequency) {
-    parts.push(`<span class="sep">›</span>`);
-    parts.push(`<span class="active">${state.frequency}</span>`);
+    parts.push(`<span class="active">📊 ${state.school} Dashboard</span>`);
+  } else {
+    if (state.school) {
+      parts.push(`<span class="sep">›</span>`);
+      if (state.reportType) parts.push(`<span onclick="goReports()">${state.school}</span>`);
+      else                  parts.push(`<span class="active">${state.school}</span>`);
+    }
+    if (state.reportType) {
+      parts.push(`<span class="sep">›</span>`);
+      if (state.frequency) parts.push(`<span onclick="goFiles()">${state.reportType}</span>`);
+      else                 parts.push(`<span class="active">${state.reportType}</span>`);
+    }
+    if (state.frequency) {
+      parts.push(`<span class="sep">›</span>`);
+      parts.push(`<span class="active">${state.frequency}</span>`);
+    }
   }
   bc.innerHTML = parts.join('');
 }
@@ -714,18 +857,35 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function getFileIcon(mimeType) {
+function isHtmlFile(mimeType, name) {
+  return mimeType === 'text/html' || mimeType === 'application/xhtml+xml' ||
+         (name && (name.toLowerCase().endsWith('.html') || name.toLowerCase().endsWith('.htm')));
+}
+
+function getFileIcon(mimeType, name) {
   if (!mimeType) return '📄';
-  if (mimeType.includes('spreadsheet') || mimeType.includes('excel'))     return '📊';
-  if (mimeType.includes('document')    || mimeType.includes('word'))      return '📝';
-  if (mimeType.includes('presentation')|| mimeType.includes('powerpoint'))return '📑';
-  if (mimeType.includes('pdf'))   return '📕';
-  if (mimeType.includes('image')) return '🖼️';
-  if (mimeType.includes('html'))  return '🌐';
+  if (isHtmlFile(mimeType, name))                                              return '🌐';
+  if (mimeType.includes('spreadsheet') || mimeType.includes('excel'))          return '📊';
+  if (mimeType.includes('document')    || mimeType.includes('word'))           return '📝';
+  if (mimeType.includes('presentation')|| mimeType.includes('powerpoint'))     return '📑';
+  if (mimeType.includes('pdf'))                                                 return '📕';
+  if (mimeType.includes('image'))                                               return '🖼️';
   return '📄';
 }
 
-function getPreviewUrl(fileId, mimeType) {
+/**
+ * Build the correct iframe preview URL.
+ * - HTML files → served from Drive's web-content endpoint so the actual
+ *   HTML renders (not a Drive preview wrapper).
+ * - Google Docs/Sheets/Slides → their own /preview URL.
+ * - PDFs and everything else → Drive file preview.
+ */
+function getPreviewUrl(fileId, mimeType, name) {
+  if (isHtmlFile(mimeType, name)) {
+    // Drive's export?mimeType=text/html gives raw HTML directly.
+    // The ?rm=minimal param hides the Drive chrome so only the content shows.
+    return `https://drive.google.com/file/d/${fileId}/preview?rm=minimal`;
+  }
   if (!mimeType) return `https://drive.google.com/file/d/${fileId}/preview`;
   if (mimeType.includes('spreadsheet')) return `https://docs.google.com/spreadsheets/d/${fileId}/preview`;
   if (mimeType.includes('document'))    return `https://docs.google.com/document/d/${fileId}/preview`;
@@ -733,7 +893,10 @@ function getPreviewUrl(fileId, mimeType) {
   return `https://drive.google.com/file/d/${fileId}/preview`;
 }
 
-function getDriveUrl(fileId, mimeType) {
+function getDriveUrl(fileId, mimeType, name) {
+  if (isHtmlFile(mimeType, name)) {
+    return `https://drive.google.com/file/d/${fileId}/view`;
+  }
   if (!mimeType) return `https://drive.google.com/file/d/${fileId}/view`;
   if (mimeType.includes('spreadsheet')) return `https://docs.google.com/spreadsheets/d/${fileId}/edit`;
   if (mimeType.includes('document'))    return `https://docs.google.com/document/d/${fileId}/edit`;
@@ -744,15 +907,15 @@ function getDriveUrl(fileId, mimeType) {
 // ═══════════════════════════════════════════════════════════════
 //  NAVIGATION
 // ═══════════════════════════════════════════════════════════════
-function goHome()          { state = { school: null, reportType: null, frequency: null }; updateBreadcrumb(); showView('home-view'); window.scrollTo(0,0); }
-function selectSchool(s)   { state.school = s; state.reportType = null; state.frequency = null; updateBreadcrumb(); renderReportTypes(); showView('reports-view'); window.scrollTo(0,0); }
-function goReports()       { state.reportType = null; state.frequency = null; updateBreadcrumb(); renderReportTypes(); showView('reports-view'); window.scrollTo(0,0); }
-function selectReport(rt)  { state.reportType = rt; state.frequency = null; updateBreadcrumb(); renderFilesView(); showView('files-view'); window.scrollTo(0,0); }
-function goFiles()         { state.frequency = null; updateBreadcrumb(); renderFilesView(); showView('files-view'); window.scrollTo(0,0); }
+function goHome()          { state = { school: null, reportType: null, frequency: null, view: 'home' }; updateBreadcrumb(); showView('home-view'); window.scrollTo(0,0); }
+function selectSchool(s)   { state.school = s; state.reportType = null; state.frequency = null; state.view = 'reports'; updateBreadcrumb(); renderReportTypes(); showView('reports-view'); window.scrollTo(0,0); }
+function goReports()       { state.reportType = null; state.frequency = null; state.view = 'reports'; updateBreadcrumb(); renderReportTypes(); showView('reports-view'); window.scrollTo(0,0); }
+function selectReport(rt)  { state.reportType = rt; state.frequency = null; state.view = 'files'; updateBreadcrumb(); renderFilesView(); showView('files-view'); window.scrollTo(0,0); }
+function goFiles()         { state.frequency = null; state.view = 'files'; updateBreadcrumb(); renderFilesView(); showView('files-view'); window.scrollTo(0,0); }
 function selectFrequency(f){ state.frequency = f; updateBreadcrumb(); renderFreqTabs(); loadFiles(f); }
 
 // ═══════════════════════════════════════════════════════════════
-//  RENDER
+//  RENDER: REPORT TYPES
 // ═══════════════════════════════════════════════════════════════
 function renderReportTypes() {
   const cls        = schoolClass(state.school);
@@ -810,9 +973,7 @@ async function loadFiles(freq) {
   container.innerHTML = `
     <div class="state-box">
       <div class="spinner"></div>
-      <p>Loading reports…<br>
-        <small style="color:var(--warning-text)">HTML files are converted to PDF on first load — may take a moment.</small>
-      </p>
+      <p>Loading reports…</p>
     </div>`;
 
   try {
@@ -831,12 +992,16 @@ async function loadFiles(freq) {
     const list = document.createElement('div');
     list.className = 'files-list';
     for (const file of data.files) {
+      const isHtml = isHtmlFile(file.mimeType, file.name);
+      const badge  = isHtml
+        ? `<span class="file-type-badge html">HTML</span>`
+        : (file.mimeType && file.mimeType.includes('pdf') ? `<span class="file-type-badge pdf">PDF</span>` : '');
       const card = document.createElement('div');
       card.className = 'file-card ' + cls;
       card.innerHTML = `
-        <div class="file-icon ${cls}">${getFileIcon(file.mimeType)}</div>
+        <div class="file-icon ${cls}">${getFileIcon(file.mimeType, file.name)}</div>
         <div class="file-meta">
-          <h4>${file.name}</h4>
+          <h4>${file.name}${badge}</h4>
           <div class="date">Modified: ${formatDate(file.modified)}</div>
         </div>
         <div class="file-arrow">›</div>`;
@@ -852,12 +1017,27 @@ async function loadFiles(freq) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  VIEWER
+//  VIEWER  — now handles HTML natively
 // ═══════════════════════════════════════════════════════════════
 function openViewer(file) {
+  const isHtml = isHtmlFile(file.mimeType, file.name);
   document.getElementById('viewer-title').textContent = file.name;
-  document.getElementById('viewer-open').href         = getDriveUrl(file.id, file.mimeType);
-  document.getElementById('report-frame').src         = getPreviewUrl(file.id, file.mimeType);
+  document.getElementById('viewer-open').href         = getDriveUrl(file.id, file.mimeType, file.name);
+  document.getElementById('report-frame').src         = getPreviewUrl(file.id, file.mimeType, file.name);
+
+  // Mode badge
+  const badge = document.getElementById('viewer-mode-badge');
+  if (isHtml) {
+    badge.textContent  = '🌐 HTML';
+    badge.className    = 'viewer-mode-badge html';
+  } else if (file.mimeType && file.mimeType.includes('pdf')) {
+    badge.textContent  = '📕 PDF';
+    badge.className    = 'viewer-mode-badge pdf';
+  } else {
+    badge.textContent  = '';
+    badge.className    = 'viewer-mode-badge';
+  }
+
   document.getElementById('main-content').style.display = 'none';
   document.getElementById('viewer-view').classList.add('active');
   window.scrollTo(0, 0);
@@ -867,6 +1047,149 @@ function closeViewer() {
   document.getElementById('report-frame').src = 'about:blank';
   document.getElementById('main-content').style.display = 'block';
   document.getElementById('viewer-view').classList.remove('active');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════════════════
+async function openDashboard(school) {
+  state.school = school;
+  state.view   = 'dashboard';
+  state.reportType = null;
+  state.frequency  = null;
+  updateBreadcrumb();
+
+  const cls        = schoolClass(school);
+  const schoolData = FOLDERS[school];
+  const reportTypes = Object.keys(schoolData);
+  const totalFolders = reportTypes.reduce((s, rt) => s + Object.keys(schoolData[rt].folders).length, 0);
+
+  // Header
+  const header = document.getElementById('dash-header');
+  header.className = 'dash-header ' + cls;
+  document.getElementById('dash-icon').textContent      = school === 'GHK Lab School' ? '🔬' : '🏫';
+  document.getElementById('dash-school-title').textContent = school + ' Dashboard';
+  document.getElementById('dash-school-sub').textContent   = 'Live overview of all report folders';
+
+  // Stats row
+  document.getElementById('dash-stats-row').innerHTML = `
+    <div class="dash-stat ${cls}">
+      <div class="ds-value">${reportTypes.length}</div>
+      <div class="ds-label">Report Types</div>
+    </div>
+    <div class="dash-stat ${cls}">
+      <div class="ds-value">${totalFolders}</div>
+      <div class="ds-label">Total Folders</div>
+    </div>
+    <div class="dash-stat ${cls}">
+      <div class="ds-value" id="dash-total-files">—</div>
+      <div class="ds-label">Files Found</div>
+    </div>
+    <div class="dash-stat ${cls}">
+      <div class="ds-value" id="dash-updated-today">—</div>
+      <div class="ds-label">Updated Today</div>
+    </div>`;
+
+  // Sections skeleton
+  const sectionsEl = document.getElementById('dash-sections');
+  sectionsEl.innerHTML = '';
+  for (const rt of reportTypes) {
+    const section = document.createElement('div');
+    section.className = 'dash-section';
+    section.id = 'dash-sec-' + rt.replace(/\s+/g, '_');
+
+    const freqChips = Object.keys(schoolData[rt].folders).map(f =>
+      `<div class="dash-freq-chip ${cls}" onclick="dashGoToFreq('${rt}','${f}')">${f}</div>`
+    ).join('');
+
+    section.innerHTML = `
+      <div class="dash-section-head ${cls}">
+        <div class="dsh-left">
+          <span class="dsh-icon">${schoolData[rt].icon}</span>
+          <h3>${rt}</h3>
+        </div>
+        <span class="dsh-browse" onclick="selectSchoolAndReport('${school}','${rt}')">Browse all ›</span>
+      </div>
+      <div class="dash-freq-row">${freqChips}</div>
+      <div class="dash-latest" id="dash-latest-${rt.replace(/\s+/g,'_')}">
+        <div class="dash-loading"><div class="mini-spinner"></div></div>
+      </div>`;
+    sectionsEl.appendChild(section);
+  }
+
+  showView('dashboard-view');
+  window.scrollTo(0, 0);
+
+  // Load latest file from the FIRST (Daily/most-frequent) folder of each report type
+  let totalFiles = 0;
+  let updatedToday = 0;
+  const today = new Date().toDateString();
+
+  await Promise.all(reportTypes.map(async rt => {
+    const firstFreq     = Object.keys(schoolData[rt].folders)[0];
+    const folderId      = schoolData[rt].folders[firstFreq];
+    const latestEl      = document.getElementById('dash-latest-' + rt.replace(/\s+/g,'_'));
+
+    try {
+      if (!AUTH.isLoggedIn()) return;
+      const url  = `${APPS_SCRIPT_URL}?folderId=${folderId}&token=${encodeURIComponent(AUTH.token)}`;
+      const res  = await fetch(url);
+      const data = await res.json();
+
+      if (data.error === 'UNAUTHORIZED') { AUTH.clear(); doLogout(); return; }
+      if (data.error || !data.files)     { latestEl.innerHTML = `<p style="font-size:13px;color:var(--text-muted);padding:4px 0">Could not load.</p>`; return; }
+
+      const files = data.files.slice(0, 3); // show up to 3 most recent
+      totalFiles += data.files.length;
+      data.files.forEach(f => { if (new Date(f.modified).toDateString() === today) updatedToday++; });
+
+      // Update running totals
+      document.getElementById('dash-total-files').textContent  = totalFiles;
+      document.getElementById('dash-updated-today').textContent = updatedToday;
+
+      if (files.length === 0) {
+        latestEl.innerHTML = `<p style="font-size:13px;color:var(--text-muted);padding:4px 0">No files yet.</p>`;
+        return;
+      }
+
+      latestEl.innerHTML = `<div class="dash-latest-label">Latest from ${firstFreq}</div>` +
+        files.map(f => `
+          <div class="dash-latest-item" onclick="openViewerFromDash('${f.id}','${escAttr(f.mimeType)}','${escAttr(f.name)}','${escAttr(f.modified)}')">
+            <span class="dli-icon">${getFileIcon(f.mimeType, f.name)}</span>
+            <span class="dli-name">${f.name}</span>
+            <span class="dli-freq">${firstFreq}</span>
+            <span class="dli-date">${formatDate(f.modified)}</span>
+          </div>`).join('');
+
+    } catch (err) {
+      latestEl.innerHTML = `<p style="font-size:13px;color:var(--text-muted);padding:4px 0">Error loading.</p>`;
+    }
+  }));
+}
+
+function escAttr(s) {
+  return String(s || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+function openViewerFromDash(id, mimeType, name, modified) {
+  openViewer({ id, mimeType, name, modified });
+}
+
+function dashGoToFreq(reportType, freq) {
+  selectSchoolAndReport(state.school, reportType);
+  // slight delay so the view renders first, then auto-select freq
+  setTimeout(() => selectFrequency(freq), 50);
+}
+
+function selectSchoolAndReport(school, reportType) {
+  state.school     = school;
+  state.reportType = reportType;
+  state.frequency  = null;
+  state.view       = 'files';
+  updateBreadcrumb();
+  renderFilesView();
+  showView('files-view');
+  window.scrollTo(0, 0);
 }
 
 // ═══════════════════════════════════════════════════════════════
