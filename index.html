@@ -297,7 +297,7 @@
       <button class="viewer-btn pdf" id="pdf-share-btn" onclick="sharePdf()">📥 Share as PDF</button>
       <a class="viewer-btn open" id="viewer-open" href="#" target="_blank">Open in Drive ↗</a>
     </div>
-    <iframe id="report-frame" src="about:blank" allowfullscreen sandbox="allow-same-origin allow-scripts allow-popups"></iframe>
+    <iframe id="report-frame" src="about:blank" allowfullscreen></iframe>
   </div>
 
   <main id="main-content">
@@ -646,23 +646,17 @@ async function openViewer(file){
   const frame=document.getElementById('report-frame');
 
   if(isHtmlFile(file.mimeType,file.name)){
-    // Show loading state in iframe
-    frame.src='about:blank';
-    frame.srcdoc=`<html><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;background:#f9fafb;margin:0"><div style="text-align:center"><div style="width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:#1a56db;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px"></div><p style="color:#6b7280;font-size:14px">Loading report…</p><style>@keyframes spin{to{transform:rotate(360deg)}}</style></div></body></html>`;
+    // Show spinner via srcdoc — no src= conflict, no sandbox needed
+    frame.removeAttribute('src');
+    frame.srcdoc='<!DOCTYPE html><html><head><style>body{margin:0;display:flex;align-items:center;justify-content:center;height:100vh;background:#f9fafb;font-family:sans-serif;}.sp{width:36px;height:36px;border:3px solid #e5e7eb;border-top-color:#1a56db;border-radius:50%;animation:s .7s linear infinite;margin:0 auto 14px;}@keyframes s{to{transform:rotate(360deg)}}p{color:#6b7280;font-size:14px;margin:0}</style></head><body><div style="text-align:center"><div class="sp"></div><p>Loading report…</p></div></body></html>';
 
     try{
-      // Fetch HTML content from Apps Script backend
-      const data=await apiFetch(`fileId=${file.id}`);
+      const data=await apiFetch('fileId='+file.id);
       if(data.error) throw new Error(data.error);
-
-      // Create a blob URL so the HTML renders properly (not as source code)
-      const blob=new Blob([data.html],{type:'text/html;charset=utf-8'});
-      const blobUrl=URL.createObjectURL(blob);
-      frame.src=blobUrl;
-      // Revoke after load to free memory
-      frame.onload=()=>{ URL.revokeObjectURL(blobUrl); frame.onload=null; };
+      // Inject HTML directly via srcdoc — renders fully styled with all CSS/images
+      frame.srcdoc = data.html;
     }catch(err){
-      frame.srcdoc=`<html><body style="font-family:sans-serif;padding:32px;color:#dc2626"><h2>⚠️ Could not load report</h2><p style="margin-top:8px">${err.message}</p></body></html>`;
+      frame.srcdoc='<!DOCTYPE html><html><body style="font-family:sans-serif;padding:32px;color:#dc2626;background:#fff"><h2>Could not load report</h2><p style="color:#6b7280;margin-top:8px">'+err.message+'</p><p style="margin-top:16px;font-size:13px;color:#9ca3af">Try the Open in Drive button above.</p></body></html>';
     }
   } else {
     // PDFs / Sheets / Docs — use Drive preview
