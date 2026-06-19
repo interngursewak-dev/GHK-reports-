@@ -122,6 +122,9 @@
     .freq-tab:hover{border-color:#9ca3af;color:var(--text);}
     .freq-tab.active.blue{background:var(--blue);color:white;border-color:var(--blue);}
     .freq-tab.active.purple{background:var(--purple);color:white;border-color:var(--purple);}
+    .freq-tab.analyze-tab{border-style:dashed;font-weight:600;}
+    .freq-tab.analyze-tab.active.blue{background:var(--blue);border-style:solid;}
+    .freq-tab.analyze-tab.active.purple{background:var(--purple);border-style:solid;}
     .files-list{display:flex;flex-direction:column;gap:8px;}
     .file-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:border-color .15s,box-shadow .15s;}
     .file-card:hover{box-shadow:var(--shadow);}
@@ -226,6 +229,18 @@
     .dash-loading{padding:16px 20px;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;}
     .mini-spin{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
     .no-files-note{padding:12px 20px 16px;font-size:13px;color:var(--muted);}
+
+    /* ── Analyze-by-date panel (inside Files view) ── */
+    .analyze-panel{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px;}
+    .analyze-controls{display:flex;gap:10px;align-items:center;margin-bottom:6px;flex-wrap:wrap;}
+    .analyze-date-input{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none;}
+    .analyze-date-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,86,219,.12);}
+    .analyze-run-btn{padding:9px 18px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;color:white;transition:opacity .15s;}
+    .analyze-run-btn.blue{background:var(--blue);}
+    .analyze-run-btn.purple{background:var(--purple);}
+    .analyze-run-btn:hover{opacity:.88;}
+    .analyze-hint{font-size:12px;color:var(--muted);margin-bottom:18px;}
+    .analyze-note{font-size:12px;color:var(--muted);margin-top:14px;}
 
     /* ── PDF share modal overlay ── */
     #pdf-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;}
@@ -483,6 +498,7 @@ function showApp(){
 let state={school:null,reportType:null,frequency:null,view:'home'};
 let currentFile=null; // file object open in viewer
 let pdfData=null;     // base64 PDF data after conversion
+let analysisMatches=[]; // results from the most recent date-analysis run
 
 // ═══════════════════════════════════════════════════════
 //  HELPERS
@@ -511,7 +527,7 @@ function updateBreadcrumb(){
       p.push(`<span class="sep">›</span>`);
       p.push(state.frequency?`<span onclick="goFiles()">${state.reportType}</span>`:`<span class="active">${state.reportType}</span>`);
     }
-    if(state.frequency) p.push(`<span class="sep">›</span><span class="active">${state.frequency}</span>`);
+    if(state.frequency) p.push(`<span class="sep">›</span><span class="active">${state.frequency==='__analyze__'?'Analyze by Date':state.frequency}</span>`);
   }
   bc.innerHTML=p.join('');
 }
@@ -549,7 +565,14 @@ function selectSchool(s){state.school=s;state.reportType=null;state.frequency=nu
 function goReports(){state.reportType=null;state.frequency=null;state.view='reports';updateBreadcrumb();renderReportTypes();showView('reports-view');window.scrollTo(0,0);}
 function selectReport(rt){state.reportType=rt;state.frequency=null;state.view='files';updateBreadcrumb();renderFilesView();showView('files-view');window.scrollTo(0,0);}
 function goFiles(){state.frequency=null;state.view='files';updateBreadcrumb();renderFilesView();showView('files-view');window.scrollTo(0,0);}
-function selectFrequency(f){state.frequency=f;updateBreadcrumb();renderFreqTabs();loadFiles(f);}
+
+function selectFrequency(f){
+  state.frequency=f;
+  updateBreadcrumb();
+  renderFreqTabs();
+  if(f==='__analyze__'){ renderAnalyzePanel(); }
+  else { loadFiles(f); }
+}
 
 // ═══════════════════════════════════════════════════════
 //  RENDER REPORT TYPES
@@ -591,6 +614,12 @@ function renderFreqTabs(){
     t.addEventListener('click',()=>selectFrequency(freq));
     tabs.appendChild(t);
   }
+  // NEW: extra tab that opens the date-based analysis panel
+  const analyzeTab=document.createElement('div');
+  analyzeTab.className='freq-tab analyze-tab'+(state.frequency==='__analyze__'?' active '+cls:'');
+  analyzeTab.textContent='📅 Analyze by Date';
+  analyzeTab.addEventListener('click',()=>selectFrequency('__analyze__'));
+  tabs.appendChild(analyzeTab);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -627,6 +656,210 @@ async function loadFiles(freq){
   }catch(err){
     container.innerHTML=`<div class="state-box"><div class="icon">⚠️</div><p>Could not load files.<br><small>${err.message}</small></p></div>`;
   }
+}
+
+// ═══════════════════════════════════════════════════════
+//  ANALYZE BY DATE  (new feature)
+//  Scans every frequency folder of the current report type
+//  for a file matching the chosen date, opens any HTML
+//  report found, and parses out attendance-style stats.
+// ═══════════════════════════════════════════════════════
+
+function renderAnalyzePanel(){
+  const cls=sClass(state.school);
+  const container=document.getElementById('file-list-container');
+  const today=new Date().toISOString().slice(0,10);
+  container.innerHTML=`
+    <div class="analyze-panel">
+      <p class="analyze-hint">Pick a date — this checks every frequency folder under <b>${state.reportType}</b> for a report covering that day and pulls out the key numbers automatically.</p>
+      <div class="analyze-controls">
+        <input type="date" id="analyze-date" class="analyze-date-input" value="${today}">
+        <button class="analyze-run-btn ${cls}" onclick="runDateAnalysis()">🔍 Analyze</button>
+      </div>
+    </div>
+    <div id="analyze-results"></div>`;
+}
+
+// Build a list of plausible filename substrings for a given yyyy-mm-dd date
+function dateCandidates(dateStr){
+  const d=new Date(dateStr+'T00:00:00');
+  const dd=String(d.getDate()).padStart(2,'0');
+  const mm=String(d.getMonth()+1).padStart(2,'0');
+  const yyyy=d.getFullYear();
+  const months=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  const mon=months[d.getMonth()];
+  return [
+    `${yyyy}-${mm}-${dd}`, `${dd}-${mm}-${yyyy}`, `${dd}_${mm}_${yyyy}`, `${dd}.${mm}.${yyyy}`,
+    `${dd}-${mon}-${yyyy}`, `${dd}_${mon}_${yyyy}`, `${dd} ${mon} ${yyyy}`, `${mon} ${dd} ${yyyy}`,
+    `${yyyy}${mm}${dd}`
+  ];
+}
+
+// True if a file's name OR its IST-corrected modified date matches the chosen date
+function fileMatchesDate(file,dateStr,candidates){
+  const nameLower=file.name.toLowerCase();
+  if(candidates.some(c=>nameLower.includes(c))) return true;
+  try{
+    const istDate=new Date(file.modified).toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'});
+    return istDate===dateStr;
+  }catch(e){ return false; }
+}
+
+// Generic parser: works across report types without knowing the exact template.
+// 1) Looks for labeled summary numbers in the page text (Present: 40, Attendance: 88.9%, etc.)
+// 2) Falls back to tallying any table that has a "Status" column (P/A/L/Leave values per row).
+function parseReportHTML(htmlString){
+  const stats={present:null,absent:null,late:null,leave:null,total:null,percentage:null};
+  let doc;
+  try{
+    doc=new DOMParser().parseFromString(htmlString,'text/html');
+  }catch(e){ return stats; }
+
+  const bodyText=(doc.body?(doc.body.innerText||doc.body.textContent):'')||'';
+  const patterns=[
+    {key:'present',    re:/present[^0-9%]{0,15}(\d+)/i},
+    {key:'absent',     re:/absent[^0-9%]{0,15}(\d+)/i},
+    {key:'late',       re:/late[^0-9%]{0,15}(\d+)/i},
+    {key:'leave',      re:/leave[^0-9%]{0,15}(\d+)/i},
+    {key:'total',      re:/total[^0-9%]{0,20}(\d+)/i},
+    {key:'percentage', re:/(\d{1,3}(?:\.\d+)?)\s*%/}
+  ];
+  patterns.forEach(p=>{
+    const m=bodyText.match(p.re);
+    if(m) stats[p.key]= p.key==='percentage' ? parseFloat(m[1]) : parseInt(m[1],10);
+  });
+
+  // Fallback / cross-check: tally a Status column across all tables
+  let tally={present:0,absent:0,late:0,leave:0,rows:0};
+  doc.querySelectorAll('table').forEach(table=>{
+    const headerRow=table.querySelector('tr');
+    if(!headerRow) return;
+    const headers=Array.from(headerRow.querySelectorAll('th,td')).map(c=>c.textContent.trim().toLowerCase());
+    const statusIdx=headers.findIndex(h=>h.includes('status'));
+    if(statusIdx===-1) return;
+    Array.from(table.querySelectorAll('tr')).slice(1).forEach(row=>{
+      const cells=row.querySelectorAll('td');
+      if(!cells[statusIdx]) return;
+      const val=cells[statusIdx].textContent.trim().toLowerCase();
+      tally.rows++;
+      if(/^p(resent)?$/.test(val)) tally.present++;
+      else if(/^a(bsent)?$/.test(val)) tally.absent++;
+      else if(/^l(ate)?$/.test(val)) tally.late++;
+      else if(val.includes('leave')) tally.leave++;
+    });
+  });
+  if(tally.rows>0){
+    if(stats.total==null)   stats.total=tally.rows;
+    if(stats.present==null) stats.present=tally.present;
+    if(stats.absent==null)  stats.absent=tally.absent;
+    if(stats.late==null)    stats.late=tally.late;
+    if(stats.leave==null)   stats.leave=tally.leave;
+  }
+  if(stats.percentage==null && stats.total && stats.present!=null){
+    stats.percentage=parseFloat(((stats.present/stats.total)*100).toFixed(1));
+  }
+  return stats;
+}
+
+async function runDateAnalysis(){
+  const dateStr=document.getElementById('analyze-date').value;
+  const resultsEl=document.getElementById('analyze-results');
+  if(!dateStr){ resultsEl.innerHTML=`<div class="state-box"><p>Please pick a date.</p></div>`; return; }
+
+  resultsEl.innerHTML=`<div class="state-box"><div class="spinner"></div><p>Scanning all frequency folders & parsing reports for this date…</p></div>`;
+
+  const candidates=dateCandidates(dateStr).map(c=>c.toLowerCase());
+  const sd=FOLDERS[state.school][state.reportType].folders;
+  const matches=[];
+
+  await Promise.all(Object.entries(sd).map(async ([freq,folderId])=>{
+    try{
+      const data=await apiFetch(`folderId=${folderId}`);
+      if(data.error||!data.files) return;
+      const found=data.files.filter(f=>fileMatchesDate(f,dateStr,candidates));
+      if(found.length===0) return;
+      found.sort((a,b)=>new Date(b.modified)-new Date(a.modified));
+      const file=found[0];
+
+      if(!isHtmlFile(file.mimeType,file.name)){
+        matches.push({freq,file,stats:null,nonHtml:true});
+        return;
+      }
+      const htmlData=await apiFetch(`fileId=${file.id}`);
+      if(htmlData.error) return;
+      matches.push({freq,file,stats:parseReportHTML(htmlData.html)});
+    }catch(e){ /* skip this frequency on error */ }
+  }));
+
+  renderAnalysisResults(dateStr,matches);
+}
+
+function renderAnalysisResults(dateStr,matches){
+  analysisMatches=matches;
+  const resultsEl=document.getElementById('analyze-results');
+
+  if(matches.length===0){
+    resultsEl.innerHTML=`<div class="state-box"><div class="icon">📭</div>
+      <p>No reports found matching <b>${formatDate(dateStr+'T00:00:00')}</b> in any frequency folder for ${state.reportType}.<br>
+      <small>The report file name or its Drive "modified" date didn't match this day — try a nearby date, or open the folder directly via the frequency tabs.</small></p></div>`;
+    return;
+  }
+
+  const cls=sClass(state.school);
+  let totalPresent=0,totalAbsent=0,totalLate=0,totalLeave=0,totalRecords=0,statsFound=0;
+  matches.forEach(m=>{
+    if(m.stats && m.stats.total!=null){
+      totalPresent += m.stats.present||0;
+      totalAbsent  += m.stats.absent||0;
+      totalLate    += m.stats.late||0;
+      totalLeave   += m.stats.leave||0;
+      totalRecords += m.stats.total||0;
+      statsFound++;
+    }
+  });
+  const avgPct = totalRecords>0 ? ((totalPresent/totalRecords)*100).toFixed(1) : null;
+
+  let html=`<div class="dash-kpi-row" style="margin-bottom:24px;">
+    <div class="kpi-card k-blue"><div class="kpi-icon">📄</div><div class="kpi-value">${matches.length}</div><div class="kpi-label">Reports Found</div></div>
+    <div class="kpi-card k-green"><div class="kpi-icon">✅</div><div class="kpi-value">${statsFound?totalPresent:'—'}</div><div class="kpi-label">Present (total)</div></div>
+    <div class="kpi-card k-red"><div class="kpi-icon">❌</div><div class="kpi-value">${statsFound?totalAbsent:'—'}</div><div class="kpi-label">Absent (total)</div></div>
+    <div class="kpi-card k-orange"><div class="kpi-icon">⏰</div><div class="kpi-value">${statsFound?totalLate:'—'}</div><div class="kpi-label">Late (total)</div></div>
+    <div class="kpi-card k-purple"><div class="kpi-icon">📊</div><div class="kpi-value">${avgPct!=null?avgPct+'%':'—'}</div><div class="kpi-label">Attendance %</div></div>
+  </div>
+  <p class="section-title">Breakdown by Frequency</p>
+  <div class="files-list">`;
+
+  matches.forEach((m,idx)=>{
+    if(m.nonHtml){
+      html+=`<div class="file-card ${cls}" onclick="openAnalysisFile(${idx})">
+        <div class="file-icon ${cls}">${getFileIcon(m.file.mimeType,m.file.name)}</div>
+        <div class="file-meta"><h4>${m.file.name}</h4><div class="date">${m.freq} · Non-HTML file — open to view manually</div></div>
+        <div class="file-arrow">›</div></div>`;
+      return;
+    }
+    const s=m.stats||{};
+    const parts=[];
+    parts.push(s.total!=null ? s.total+' records' : 'no table data detected');
+    if(s.present!=null) parts.push('✅ '+s.present);
+    if(s.absent!=null)  parts.push('❌ '+s.absent);
+    if(s.late!=null)    parts.push('⏰ '+s.late);
+    if(s.percentage!=null) parts.push(s.percentage+'%');
+    html+=`<div class="file-card ${cls}" onclick="openAnalysisFile(${idx})">
+      <div class="file-icon ${cls}">${getFileIcon(m.file.mimeType,m.file.name)}</div>
+      <div class="file-meta"><h4>${m.file.name}</h4><div class="date">${m.freq} &nbsp;·&nbsp; ${parts.join(' · ')}</div></div>
+      <div class="file-arrow">›</div></div>`;
+  });
+  html+='</div>';
+
+  if(statsFound<matches.length){
+    html+=`<p class="analyze-note">⚠️ ${matches.length-statsFound} of ${matches.length} matched report(s) couldn't be auto-parsed (no recognizable "Status" column or summary text). Open them directly to view.</p>`;
+  }
+  resultsEl.innerHTML=html;
+}
+
+function openAnalysisFile(idx){
+  const m=analysisMatches[idx];
+  if(m && m.file) openViewer(m.file);
 }
 
 // ═══════════════════════════════════════════════════════
